@@ -23,17 +23,9 @@
     {:cljsbuild {:source-paths #{"src/cljs"}
                  :output-to (file stage "main.js")
                  :output-dir (tmp/mkdir ::output-dir)
-                 :optimizations :simple}}) 
+                 :optimizations :whitespace}}) 
 
   (def once (-> identity (sync-time odir stage) cljsbuild (time msg)))
   (def auto (-> once (watch-time {"src/cljs" ["cljs"] "src/clj" ["clj"]})))
 
   (launch-nrepl {})) 
-
-(comment
-  
-  (once @boot/project)
-
-  (auto @boot/project)
-
-  )
