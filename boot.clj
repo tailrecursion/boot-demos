@@ -1,36 +1,28 @@
 (boot/install '{:coordinates #{[reply "0.2.0"]}})
 
-(require '[tailrecursion.boot.middleware.cljsbuild :refer [cljsbuild]])
-(require '[tailrecursion.boot.middleware.cljsbuild :refer [cljsbuild]])
-(require '[tailrecursion.boot.middleware.watch :refer [watch-time loop-msec]])
-(require '[clojure.pprint :refer [pprint]])
-(require '[clojure.java.io :refer [make-parents file copy]])
-(require '[reply.main :refer [launch-nrepl]])
+(ns user
+  (:require
+    [tailrecursion.boot.middleware.cljsbuild  :as cljs]
+    [tailrecursion.boot.middleware.sync       :as sync]
+    [tailrecursion.boot.middleware.watch      :as watch]
+    [tailrecursion.boot.middleware.time       :as time]
+    [clojure.java.io                          :as io]
+    [reply.main                               :as repl]))
 
 (boot/add ["src/clj"])
 
-(defn wrap-build [handler]
-  (fn [spec]
-    (println "Compiling ClojureScript...") 
-    (let [retspec (handler spec)
-          js-tmp  (get-in retspec [:cljsbuild :output])
-          js-out  (file (:js-out spec))]
-      (make-parents js-out)
-      (copy js-tmp js-out)
-      retspec)))
-
-(defn wrap-done [handler] (fn [spec] (handler spec) (prn :ok)))
+(def stage (tmp/mkdir ::stage "stage"))
 
 (def build (-> identity
-             cljsbuild
-             wrap-build
-             wrap-done
-             (watch-time {"src/cljs" ["cljs"]})
-             (loop-msec 100)))
+             (sync/sync-time "resources/public" stage) 
+             cljs/cljsbuild
+             (time/time "Compiling ClojureScript...")
+             (watch/watch-time {"src/cljs" ["cljs"]})
+             (watch/loop-msec 100)))
 
-(def cfg {:js-out "resources/public/main.js"
-          :cljsbuild {:source-paths #{"src/cljs"}
+(def cfg {:cljsbuild {:source-paths #{"src/cljs"}
+                      :output-to (io/file stage "main.js")
                       :output-dir (tmp/mkdir ::output-dir)
                       :optimizations :simple}})
 
-(launch-nrepl {})
+(repl/launch-nrepl {})
