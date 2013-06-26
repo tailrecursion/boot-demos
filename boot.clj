@@ -1,4 +1,9 @@
-(boot/install '{:coordinates #{[reply "0.2.0"]}})
+#boot/configuration
+{:boot {:coordinates #{[reply "0.2.0"]}
+        :directories #{"src/clj"}}
+ :pom {:project tailrecursion/btest
+       :version "0.1.0-SNAPSHOT"
+       :description "FIXME"}} 
 
 (ns user
   (:require
@@ -9,20 +14,20 @@
     [clojure.java.io                          :as io]
     [reply.main                               :as repl]))
 
-(boot/add ["src/clj"])
-
 (def stage (tmp/mkdir ::stage "stage"))
-
-(def build (-> identity
-             (sync/sync-time "resources/public" stage) 
-             cljs/cljsbuild
-             (time/time "Compiling ClojureScript...")
-             (watch/watch-time {"src/cljs" ["cljs"]})
-             (watch/loop-msec 100)))
 
 (def cfg {:cljsbuild {:source-paths #{"src/cljs"}
                       :output-to (io/file stage "main.js")
                       :output-dir (tmp/mkdir ::output-dir)
                       :optimizations :simple}})
+
+(def once (-> identity
+            (sync/sync-time "resources/public" stage) 
+            cljs/cljsbuild
+            (time/time "Compiling ClojureScript...")))
+
+(def auto (-> once
+            (watch/watch-time {"src/cljs" ["cljs"], "src/clj" ["clj"]})
+            (watch/loop-msec 100)))
 
 (repl/launch-nrepl {})
