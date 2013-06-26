@@ -3,31 +3,37 @@
         :directories #{"src/clj"}}
  :pom {:project tailrecursion/btest
        :version "0.1.0-SNAPSHOT"
-       :description "FIXME"}} 
+       :description "FIXME"}}
 
 (ns user
   (:require
-    [tailrecursion.boot.middleware.cljsbuild  :as cljs]
-    [tailrecursion.boot.middleware.sync       :as sync]
-    [tailrecursion.boot.middleware.watch      :as watch]
-    [tailrecursion.boot.middleware.time       :as time]
-    [clojure.java.io                          :as io]
-    [reply.main                               :as repl]))
+    [tailrecursion.boot.middleware.cljsbuild  :refer [cljsbuild]]
+    [tailrecursion.boot.middleware.sync       :refer [sync-time]]
+    [tailrecursion.boot.middleware.watch      :refer [watch-time]]
+    [tailrecursion.boot.middleware.time       :refer [time]]
+    [clojure.java.io                          :refer [file]]
+    [reply.main                               :refer [launch-nrepl]])
+  (:refer-clojure :exclude [time]))
 
-(def stage (tmp/mkdir ::stage "stage"))
+(let [stage (tmp/mkdir ::stage "stage")
+      msg   "Compiling ClojureScript..."
+      odir  (file "resources/public")] 
 
-(def cfg {:cljsbuild {:source-paths #{"src/cljs"}
-                      :output-to (io/file stage "main.js")
-                      :output-dir (tmp/mkdir ::output-dir)
-                      :optimizations :simple}})
+  (boot/configure
+    {:cljsbuild {:source-paths #{"src/cljs"}
+                 :output-to (file stage "main.js")
+                 :output-dir (tmp/mkdir ::output-dir)
+                 :optimizations :simple}}) 
 
-(def once (-> identity
-            (sync/sync-time "resources/public" stage) 
-            cljs/cljsbuild
-            (time/time "Compiling ClojureScript...")))
+  (def once (-> identity (sync-time odir stage) cljsbuild (time msg)))
+  (def auto (-> once (watch-time {"src/cljs" ["cljs"] "src/clj" ["clj"]})))
 
-(def auto (-> once
-            (watch/watch-time {"src/cljs" ["cljs"], "src/clj" ["clj"]})
-            (watch/loop-msec 100)))
+  (launch-nrepl {})) 
 
-(repl/launch-nrepl {})
+(comment
+  
+  (once @boot/project)
+
+  (auto @boot/project)
+
+  )
