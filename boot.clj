@@ -10,7 +10,7 @@
     [tailrecursion.boot.middleware.cljsbuild  :refer [cljsbuild]]
     [tailrecursion.boot.middleware.sync       :refer [sync-time]]
     [tailrecursion.boot.middleware.watch      :refer [watch-time]]
-    [tailrecursion.boot.middleware.time       :refer [time]]
+    [tailrecursion.boot.middleware.time       :refer [time return]]
     [clojure.java.io                          :refer [file]]
     [reply.main                               :refer [launch-nrepl]])
   (:refer-clojure :exclude [time]))
@@ -25,7 +25,7 @@
                  :output-dir (tmp/mkdir ::output-dir)
                  :optimizations :whitespace}}) 
 
-  (def once (-> identity (sync-time odir stage) cljsbuild (time msg)))
+  (def once (-> identity (sync-time odir stage) cljsbuild (time msg) (return nil)))
   (def auto (-> once (watch-time {"src/cljs" ["cljs"] "src/clj" ["clj"]})))
 
   (launch-nrepl {})) 
