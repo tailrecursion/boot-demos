@@ -15,9 +15,9 @@
     [reply.main                               :refer [launch-nrepl]])
   (:refer-clojure :exclude [time]))
 
-(let [stage (tmp/mkdir ::stage "stage")
-      msg   "Compiling ClojureScript..."
-      odir  (file "resources/public")] 
+(let [odir  (file "resources/public")
+      stage (tmp/mkdir ::stage "stage")
+      msg   "Compiling ClojureScript..."]
 
   (boot/configure
     {:cljsbuild {:source-paths #{"src/cljs"}
