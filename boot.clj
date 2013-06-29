@@ -53,13 +53,13 @@
   (def jar  (-> once (after jar/jar) (after sync-time tdir target)))
 
   ;; convenience function to run tasks
-  (def run  #(do (% @boot/env) nil))
+  (def task #(do (% @boot/env) nil))
 
   ;; make-go:
   ;;
-  ;; user=> (run once)
-  ;; user=> (run auto)
-  ;; user=> (run jar)
+  ;; user=> (task once)
+  ;; user=> (task auto)
+  ;; user=> (task jar)
 
   ;; boot into a repl in the user ns
   (launch-nrepl {}))
