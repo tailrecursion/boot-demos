@@ -47,7 +47,7 @@
      :jar       {:directories   ["resources" "src/clj" "src/cljs"]
                  :output-dir    target}}) 
 
-  ;; define build "tasks" by composing middleware
+  ;; define build tasks by composing middleware
   (def once (-> identity cljsbuild hoplon (after sync-time odir stage static) (time msg)))
   (def auto (-> once (watch-time wdirs)))
   (def jar  (-> once (after jar/jar) (after sync-time tdir target)))
