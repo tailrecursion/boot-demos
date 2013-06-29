@@ -8,6 +8,7 @@
 
 (ns user
   (:require
+    [tailrecursion.boot.middleware.jar        :as jar]
     [tailrecursion.boot.middleware.util       :refer [after return]]
     [tailrecursion.boot.middleware.hoplon     :refer [hoplon]]
     [tailrecursion.boot.middleware.cljsbuild  :refer [cljsbuild]]
@@ -19,10 +20,12 @@
   (:refer-clojure :exclude [time]))
 
 (let [odir    (file "resources/public")
+      tdir    (file "target")
       html    (file "src/html")
       static  (file "src/static")
       stage   (tmp/mkdir ::stage "stage")
       build   (tmp/mkdir ::build "build")
+      target  (tmp/mkdir ::target "target")
       msg     "Compiling Hoplon..."
       wdirs   {"src/html"   ["html" "cljs"]
                "src/clj"    ["clj"]
@@ -30,13 +33,17 @@
                "src/static" nil}]
 
   (boot/configure
-    {:hoplon    {:source-dir    "src/html"
+    {:hoplon    {:source-dir    html
                  :html-out      stage}
      :cljsbuild {:source-paths  #{"src/cljs"}
                  :output-dir    build
-                 :optimizations :whitespace}}) 
+                 :optimizations :whitespace}
+     :jar       {:directories   [odir]
+                 :output-dir    target}}) 
 
-  (def once (-> identity cljsbuild hoplon (after sync-time odir stage static) (time msg) return))
+  (def once (-> identity cljsbuild hoplon (after sync-time odir stage static) (time msg)))
   (def auto (-> once (watch-time wdirs)))
+  (def jar  (-> once (after jar/jar) (after sync-time tdir target)))
+  (def run  #(do (% @boot/env) nil))
 
   (launch-nrepl {})) 
