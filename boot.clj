@@ -46,4 +46,10 @@
   (def jar  (-> once (after jar/jar) (after sync-time tdir target)))
   (def run  #(do (% @boot/env) nil))
 
-  (launch-nrepl {})) 
+  ;; make-go:
+  ;;
+  ;; user=> (run once)
+  ;; user=> (run auto)
+  ;; user=> (run jar)
+
+  (launch-nrepl {}))
