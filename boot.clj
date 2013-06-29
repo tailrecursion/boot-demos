@@ -38,7 +38,7 @@
      :cljsbuild {:source-paths  #{"src/cljs"}
                  :output-dir    build
                  :optimizations :whitespace}
-     :jar       {:directories   ["resources"]
+     :jar       {:directories   ["resources" "src/clj" "src/cljs"]
                  :output-dir    target}}) 
 
   (def once (-> identity cljsbuild hoplon (after sync-time odir stage static) (time msg)))
