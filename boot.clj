@@ -1,3 +1,4 @@
+;; configure project (stored in #'boot/env atom)
 #boot/configuration
 {:boot {:coordinates #{[reply "0.2.0"]
                        [tailrecursion/hoplon "1.1.0-SNAPSHOT"]}
