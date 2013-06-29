@@ -19,19 +19,25 @@
     [reply.main                               :refer [launch-nrepl]])
   (:refer-clojure :exclude [time]))
 
-(let [odir    (file "resources/public")
+(let [;; output directories
+      odir    (file "resources/public")
       tdir    (file "target")
+      ;; source directories
       html    (file "src/html")
       static  (file "src/static")
+      ;; temporary directories
       stage   (tmp/mkdir ::stage "stage")
       build   (tmp/mkdir ::build "build")
       target  (tmp/mkdir ::target "target")
+      ;; build message
       msg     "Compiling Hoplon..."
+      ;; directories and file extensions to watch for changes
       wdirs   {"src/html"   ["html" "cljs"]
                "src/clj"    ["clj"]
                "src/cljs"   ["cljs"]
                "src/static" nil}]
 
+  ;; configure project (merged into #'boot/env atom)
   (boot/configure
     {:hoplon    {:source-dir    html
                  :html-out      stage}
@@ -41,9 +47,12 @@
      :jar       {:directories   ["resources" "src/clj" "src/cljs"]
                  :output-dir    target}}) 
 
+  ;; define build "tasks" by composing middleware
   (def once (-> identity cljsbuild hoplon (after sync-time odir stage static) (time msg)))
   (def auto (-> once (watch-time wdirs)))
   (def jar  (-> once (after jar/jar) (after sync-time tdir target)))
+
+  ;; convenience function to run tasks
   (def run  #(do (% @boot/env) nil))
 
   ;; make-go:
@@ -52,4 +61,5 @@
   ;; user=> (run auto)
   ;; user=> (run jar)
 
+  ;; boot into a repl in the user ns
   (launch-nrepl {}))
