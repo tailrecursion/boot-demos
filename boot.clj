@@ -19,7 +19,7 @@
     [reply.main                               :refer [launch-nrepl]])
   (:refer-clojure :exclude [time]))
 
-(let [odir    (file "resources")
+(let [odir    (file "resources/public")
       tdir    (file "target")
       html    (file "src/html")
       static  (file "src/static")
@@ -38,7 +38,7 @@
      :cljsbuild {:source-paths  #{"src/cljs"}
                  :output-dir    build
                  :optimizations :whitespace}
-     :jar       {:directories   [odir]
+     :jar       {:directories   ["resources"]
                  :output-dir    target}}) 
 
   (def once (-> identity cljsbuild hoplon (after sync-time odir stage static) (time msg)))
