@@ -19,7 +19,7 @@
     [reply.main                               :refer [launch-nrepl]])
   (:refer-clojure :exclude [time]))
 
-(let [odir    (file "resources/public")
+(let [odir    (file "resources")
       tdir    (file "target")
       html    (file "src/html")
       static  (file "src/static")
