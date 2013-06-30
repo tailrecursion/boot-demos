@@ -11,6 +11,7 @@
   (:require
     [tailrecursion.boot.middleware.jar        :as jar]
     [tailrecursion.boot.middleware.util       :refer [after return]]
+    [tailrecursion.boot.middleware.pom        :refer [wrap-pom]]
     [tailrecursion.boot.middleware.hoplon     :refer [hoplon]]
     [tailrecursion.boot.middleware.cljsbuild  :refer [cljsbuild]]
     [tailrecursion.boot.middleware.sync       :refer [sync-time]]
@@ -33,9 +34,9 @@
       ;; build message
       msg     "Compiling Hoplon..."
       ;; directories and file extensions to watch for changes
-      wdirs   {"src/html"   ["html" "cljs"]
-               "src/clj"    ["clj"]
-               "src/cljs"   ["cljs"]
+      wdirs   {"src/html"   #{"html" "cljs"}
+               "src/clj"    #{"clj"}
+               "src/cljs"   #{"cljs"}
                "src/static" nil}]
 
   ;; configure project (merged into #'boot/env atom)
@@ -45,22 +46,24 @@
      :cljsbuild {:source-paths  #{"src/cljs"}
                  :output-dir    build
                  :optimizations :whitespace}
-     :jar       {:directories   ["resources" "src/clj" "src/cljs"]
+     :jar       {:directories   #{"resources" "src/clj" "src/cljs"}
+                 :manifest      {"Micha-Says" "hello dood"}
+                 :main          'foo.bar-baz
                  :output-dir    target}}) 
 
   ;; define build tasks by composing middleware
   (def once (-> identity cljsbuild hoplon (after sync-time odir stage static) (time msg)))
   (def auto (-> once (watch-time wdirs)))
-  (def jar  (-> once (after jar/jar) (after sync-time tdir target)))
+  (def jar  (-> once wrap-pom (after jar/jar) (after sync-time tdir target)))
 
   ;; convenience function to run tasks
-  (def task #(do (% @boot/env) nil))
+  (def build #(do (% @boot/env) nil))
 
   ;; make-go:
   ;;
-  ;; user=> (task once)
-  ;; user=> (task auto)
-  ;; user=> (task jar)
+  ;; user=> (build once)
+  ;; user=> (build auto)
+  ;; user=> (build jar)
 
   ;; boot into a repl in the user ns
   (launch-nrepl {}))
