@@ -46,7 +46,7 @@
      :cljsbuild {:source-paths  #{"src/cljs"}
                  :output-dir    build
                  :optimizations :whitespace}
-     :jar       {:directories   #{"resources" "src/clj" "src/cljs"}
+     :jar       {:resources     #{"resources" "src/cljs"}
                  :manifest      {"Micha-Says" "hello dood"}
                  :main          'foo.bar-baz
                  :output-dir    target}}) 
