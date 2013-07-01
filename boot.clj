@@ -17,20 +17,24 @@
     [tailrecursion.boot.middleware.sync       :refer [sync-time]]
     [tailrecursion.boot.middleware.watch      :refer [watch-time]]
     [tailrecursion.boot.middleware.time       :refer [time]]
-    [clojure.java.io                          :refer [file]]
+    [clojure.java.io                          :refer [file make-parents]]
     [reply.main                               :refer [launch-nrepl]])
   (:refer-clojure :exclude [time]))
 
-(let [;; output directories
-      odir    (file "resources/public")
-      tdir    (file "target")
+(let [with-parents #(doto (apply file %&) make-parents)
+      ;; output directories
+      odir    (with-parents "resources/public")
+      tdir    (with-parents "target")
       ;; source directories
       html    (file "src/html")
       static  (file "src/static")
       ;; temporary directories
+      jsdir   (tmp/mkdir ::jsdir "jsdir")
+      cljsdir (tmp/mkdir ::cljsdir "cljsdir")
       stage   (tmp/mkdir ::stage "stage")
       build   (tmp/mkdir ::build "build")
       target  (tmp/mkdir ::target "target")
+      js-out  (file jsdir "main.js")
       ;; build message
       msg     "Compiling Hoplon..."
       ;; directories and file extensions to watch for changes
@@ -42,19 +46,26 @@
   ;; configure project (merged into #'boot/env atom)
   (boot/configure
     {:hoplon    {:source-dir    html
-                 :html-out      stage}
-     :cljsbuild {:source-paths  #{"src/cljs"}
+                 :html-out      stage
+                 :cljs-out      cljsdir
+                 :compiled-js   js-out}
+     :cljsbuild {:source-paths  #{cljsdir "src/cljs"}
+                 :output-to     js-out
                  :output-dir    build
                  :optimizations :whitespace}
-     :jar       {:resources     #{"resources" "src/cljs"}
+     :jar       {:resources     #{"resources"}
                  :manifest      {"Micha-Says" "hello dood"}
                  :main          'foo.bar-baz
                  :output-dir    target}}) 
 
   ;; define build tasks by composing middleware
-  (def once (-> identity cljsbuild hoplon (after sync-time odir stage static) (time msg)))
+  (def once (-> identity cljsbuild hoplon (after sync-time odir stage static jsdir) (time msg)))
   (def auto (-> once (watch-time wdirs)))
   (def jar  (-> once wrap-pom (after jar/jar) (after sync-time tdir target)))
+
+  (defn file-segments [f]
+    (loop [out (list (.getName f)) f (.getParentFile f)]
+      (if f (recur (cons (.getName f) out) (.getParentFile f)) out)))
 
   ;; convenience function to run tasks
   (def build #(do (% @boot/env) nil))
